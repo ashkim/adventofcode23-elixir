@@ -1,0 +1,151 @@
+# Day 2
+
+## Part 1
+
+--- Day 2: Cube Conundrum ---
+
+You're launched high into the atmosphere! The apex of your trajectory just barely reaches the surface of a large island floating in the sky. You gently land in a fluffy pile of leaves. It's quite cold, but you don't see much snow. An Elf runs over to greet you.
+
+The Elf explains that you've arrived at Snow Island and apologizes for the lack of snow. He'll be happy to explain the situation, but it's a bit of a walk, so you have some time. They don't get many visitors up here; would you like to play a game in the meantime?
+
+As you walk, the Elf shows you a small bag and some cubes which are either red, green, or blue. Each time you play this game, he will hide a secret number of cubes of each color in the bag, and your goal is to figure out information about the number of cubes.
+
+To get information, once a bag has been loaded with cubes, the Elf will reach into the bag, grab a handful of random cubes, show them to you, and then put them back in the bag. He'll do this a few times per game.
+
+You play several games and record the information from each game (your puzzle input). Each game is listed with its ID number (like the 11 in Game 11: ...) followed by a semicolon-separated list of subsets of cubes that were revealed from the bag (like 3 red, 5 green, 4 blue).
+
+For example, the record of a few games might look like this:
+
+Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.13.1"}
+])
+
+input = Kino.Input.textarea("Data")
+```
+
+```elixir
+defmodule Solution do
+  @color_limits %{
+    "red" => 12,
+    "green" => 13,
+    "blue" => 14
+  }
+
+  def parse_counts(l) do
+    l
+    |> String.split(~r"[,;]")
+    |> Enum.map(fn cube ->
+      cube
+      |> String.trim()
+      |> String.split(" ")
+      |> then(fn [n, color] ->
+        with {value, ""} <- Integer.parse(n) do
+          [value, color]
+        else
+          :error -> [0, color]
+        end
+      end)
+    end)
+    |> Enum.group_by(fn [_, color] -> color end, fn [n, _] -> n end)
+    |> Enum.map(fn {color, counts} -> {color, Enum.max(counts)} end)
+    |> Map.new()
+  end
+
+  def parse_game(l) do
+    with [game_raw, counts_raw] <- String.split(l, ": "),
+         {game_id, ""} <- String.replace_prefix(game_raw, "Game ", "") |> Integer.parse(),
+         counts <- Solution.parse_counts(counts_raw) do
+      %{
+        :game_id => game_id,
+        :counts => counts
+      }
+    end
+  end
+
+  def is_possible(color_counts) do
+    Enum.map(@color_limits, fn {name, limit} -> color_counts[name] <= limit end)
+    |> Enum.all?()
+  end
+
+  def solve(data) do
+    data
+    |> String.split("\n")
+    |> Stream.map(&Solution.parse_game/1)
+    |> Stream.filter(fn %{counts: counts, game_id: _} -> Solution.is_possible(counts) end)
+    |> Enum.into([])
+    |> Stream.map(fn game -> game.game_id end)
+    |> Enum.sum()
+  end
+end
+
+data = Kino.Input.read(input)
+Solution.solve(data)
+```
+
+Part 2
+
+```elixir
+defmodule Solution2 do
+  @color_limits %{
+    "red" => 12,
+    "green" => 13,
+    "blue" => 14
+  }
+
+  def parse_counts(l) do
+    l
+    |> String.split(~r"[,;]")
+    |> Enum.map(fn cube ->
+      cube
+      |> String.trim()
+      |> String.split(" ")
+      |> then(fn [n, color] ->
+        with {value, ""} <- Integer.parse(n) do
+          [value, color]
+        else
+          :error -> [0, color]
+        end
+      end)
+    end)
+    |> Enum.group_by(fn [_, color] -> color end, fn [n, _] -> n end)
+    |> Enum.map(fn {color, counts} -> {color, Enum.max(counts)} end)
+    |> Map.new()
+  end
+
+  def parse_game(l) do
+    with [game_raw, counts_raw] <- String.split(l, ": "),
+         {game_id, ""} <- String.replace_prefix(game_raw, "Game ", "") |> Integer.parse(),
+         counts <- Solution.parse_counts(counts_raw) do
+      %{
+        :game_id => game_id,
+        :counts => counts
+      }
+    end
+  end
+
+  def is_possible(color_counts) do
+    Enum.map(@color_limits, fn {name, limit} -> color_counts[name] <= limit end)
+    |> Enum.all?()
+  end
+
+  def solve(data) do
+    data
+    |> String.split("\n")
+    |> Stream.map(&Solution.parse_game/1)
+    |> Stream.filter(fn %{counts: counts, game_id: _} -> Solution.is_possible(counts) end)
+    |> Enum.into([])
+    |> Stream.map(fn game -> game.game_id end)
+    |> Enum.sum()
+  end
+end
+
+data = Kino.Input.read(input)
+Solution.solve(data)
+```

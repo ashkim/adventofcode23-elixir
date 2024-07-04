@@ -1,0 +1,255 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Day 1
+
+## Part 1
+
+--- Day 1: Trebuchet?! ---
+
+Something is wrong with global snow production, and you've been selected to take a look. The Elves have even given you a map; on it, they've used stars to mark the top fifty locations that are likely to be having problems.
+
+You've been doing this long enough to know that to restore snow operations, you need to check all fifty stars by December 25th.
+
+Collect stars by solving puzzles. Two puzzles will be made available on each day in the Advent calendar; the second puzzle is unlocked when you complete the first. Each puzzle grants one star. Good luck!
+
+You try to ask why they can't just use a weather machine ("not powerful enough") and where they're even sending you ("the sky") and why your map looks mostly blank ("you sure ask a lot of questions") and hang on did you just say the sky ("of course, where do you think snow comes from") when you realize that the Elves are already loading you into a trebuchet ("please hold still, we need to strap you in").
+
+As they're making the final adjustments, they discover that their calibration document (your puzzle input) has been amended by a very young Elf who was apparently just excited to show off her art skills. Consequently, the Elves are having trouble reading the values on the document.
+
+The newly-improved calibration document consists of lines of text; each line originally contained a specific calibration value that the Elves now need to recover. On each line, the calibration value can be found by combining the first digit and the last digit (in that order) to form a single two-digit number.
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.13.1"}
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+```elixir
+sample_data_input = Kino.Input.textarea("Sample Data")
+```
+
+```elixir
+sample_data =
+  Kino.Input.read(sample_data_input)
+  |> String.trim()
+  |> String.split("\n")
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+["1abc2", "pqr3stu8vwx", "a1b2c3d4e5f", "treb7uchet"]
+```
+
+```elixir
+problem_data_input = Kino.Input.textarea("Problem Data")
+```
+
+```elixir
+problem_data =
+  Kino.Input.read(problem_data_input)
+  |> String.trim()
+  |> String.split("\n")
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+["two934seven1", "8825eightknfv", "sevenoneqbfzntsix55", "foursqpqvv192rdrbtcccfourone",
+ "9jpzhpxqthreelmrnlhfqmn4", "onedpsckg3xdhmgtsixthreefivejlncszkxeight", "4twofour",
+ "7eighttwo17fournsmrznntgjrdpkdjvx", "573", "ninethree3", "3gngzkpkgrf", "qeightwo2xjvfkfiveone",
+ "twoonej26", "sgoneightfoureight5sevenjzsqghg", "bnrb36xtjd7four9",
+ "threepprhsff3prbpfivesevenseven4", "38sevennineninemnfzklttkxnine3", "8mllzkfqklhonefivemv4",
+ "onedcqlqcrzn66three", "1fourjthreefc2gbtbdzsix", "eight7two4258", "4hmfzdzf", "26dsmdzznm7",
+ "plckvxznnineh34eight2", "dhrvd4eightgxznhqmh", "5fxhhkghvm3nineshpcxhtwo6fourhrktpbq",
+ "qklhmhmdlgeighttwoonetwo52five", "86threemmpchhzdvsvxfzrj", "9clvchpgrslnkhdmfkjmlrvgnf",
+ "8ncpdtspfivethree", "gtbtkqcgvh8945", "sevencrkbt3btljpdpgstlf",
+ "8nine37bpkmtghhnc2hnreightwohvs", "5qxmsrthreempcmpdcnnv41", "8threezrxhxgx4g", "jhsb3onep1",
+ "eight71rnz", "7p16lrxktlr6", "8one5fivelvdbjzz", "1nine2twodhnineonesixkqfcbgdlfg",
+ "four8sixfourfive", "pjdmt4one8sdsdhhqxlqgzpk6qrtdvxm", "sixzfourkdpmnn92qbjkjqfqpn",
+ "42threefiveh", "5fhgzt8threemzhblb6", "bbc3kxhvbfrn8four6five", "91fknhthreefour",
+ "six9fttmqpninethreevhgtrxklbvxbljsp1", "four5five1471mtfv", "3bjkggcntwo3ptmjhmthree7", ...]
+```
+
+```elixir
+defmodule Solution do
+  def firstNumber(s) do
+    Enum.find_value(String.graphemes(s), :error, fn c ->
+      case Integer.parse(c) do
+        {n, ""} -> {:ok, n}
+        :error -> false
+      end
+    end)
+  end
+
+  def lastNumber(s) do
+    Enum.find_value(Enum.reverse(String.graphemes(s)), :error, fn c ->
+      case Integer.parse(c) do
+        {n, ""} -> {:ok, n}
+        :error -> false
+      end
+    end)
+  end
+
+  def firstAndLastNumbers(s) do
+    with {:ok, first} <- firstNumber(s),
+         {:ok, last} <- lastNumber(s) do
+      {:ok, first * 10 + last}
+    else
+      _ -> :error
+    end
+  end
+
+  def solve(lines) do
+    Enum.map(lines, fn l -> Solution.firstAndLastNumbers(l) |> elem(1) end)
+    |> Enum.sum()
+    |> then(fn sum -> {:ok, sum} end)
+  end
+end
+
+ExUnit.configure(exclude: [:skip])
+ExUnit.start(autorun: false)
+
+defmodule FooTest do
+  use ExUnit.Case
+  import Solution
+
+  @sample_data sample_data
+  @problem_data problem_data
+
+  test "first number" do
+    assert firstNumber("1abcd2") == {:ok, 1}
+    assert firstNumber("a1bcd2") == {:ok, 1}
+    assert firstNumber("123abcd2") == {:ok, 1}
+    assert firstNumber("") == :error
+    assert firstNumber("abcd2") == {:ok, 2}
+    assert firstNumber("abcd") == :error
+  end
+
+  test "last number" do
+    assert lastNumber("1abcd2") == {:ok, 2}
+    assert lastNumber("a1bcd2") == {:ok, 2}
+    assert lastNumber("123abcd") == {:ok, 3}
+    assert lastNumber("") == :error
+    assert lastNumber("2abcd") == {:ok, 2}
+    assert lastNumber("abcd") == :error
+  end
+
+  test "firstAndLastNumbers" do
+    assert firstAndLastNumbers("1abc2") == {:ok, 12}
+    assert firstAndLastNumbers("pqr3stu8vwx") == {:ok, 38}
+    assert firstAndLastNumbers("a1b2c3d4e5f") == {:ok, 15}
+    assert firstAndLastNumbers("treb7uchet") == {:ok, 77}
+  end
+
+  test "solve (sample)" do
+    assert solve(@sample_data) == {:ok, 142}
+  end
+
+  test "solve (problem)" do
+    assert solve(@problem_data) == {:ok, 52974}
+  end
+end
+
+ExUnit.run()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+Excluding tags: [:skip]
+
+.....
+Finished in 0.00 seconds (0.00s async, 0.00s sync)
+5 tests, 0 failures
+
+Randomized with seed 507929
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+%{total: 5, failures: 0, excluded: 0, skipped: 0}
+```
+
+--- Part Two ---
+
+Your calculation isn't quite right. It looks like some of the digits are actually spelled out with letters: one, two, three, four, five, six, seven, eight, and nine also count as valid "digits".
+
+Equipped with this new information, you now need to find the real first and last digit on each line. For example:
+
+two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen
+
+In this example, the calibration values are 29, 83, 13, 24, 42, 14, and 76. Adding these together produces 281.
+
+What is the sum of all of the calibration values?
+
+```elixir
+sample_data_input_2 = Kino.Input.textarea("Sample data 2")
+```
+
+```elixir
+digits = %{
+  "one" => "o1e",
+  "two" => "t2o",
+  "three" => "t3e",
+  "four" => "f4r",
+  "five" => "f5e",
+  "six" => "s6x",
+  "seven" => "s7n",
+  "eight" => "e8t",
+  "nine" => "n9e"
+}
+
+sample_data_2 =
+  Kino.Input.read(sample_data_input_2)
+  |> String.trim()
+  |> String.split("\n")
+
+sample_data_2
+|> Stream.map(fn s ->
+  Enum.reduce(digits, s, fn {pattern, replacement}, acc ->
+    String.replace(acc, pattern, replacement)
+  end)
+  |> String.split("", trim: true)
+  |> Stream.filter(fn c ->
+    case Integer.parse(c) do
+      {n, ""} -> true
+      :error -> false
+    end
+  end)
+  |> Enum.into([])
+  |> then(fn l -> "#{List.first(l)}#{List.last(l)}" end)
+  |> Integer.parse()
+  |> elem(0)
+end)
+|> Enum.sum()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+warning: variable "n" is unused (if the variable is not meant to be used, prefix it with an underscore)
+  livebook/aoc2023-day1.livemd#cell:zgqpt2ewolb2koxx:25
+
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+53340
+```
+
+In this example, the calibration values are 29, 83, 13, 24, 42, 14, and 76. Adding these together produces 281.
