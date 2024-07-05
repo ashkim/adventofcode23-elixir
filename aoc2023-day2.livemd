@@ -92,13 +92,11 @@ Solution.solve(data)
 Part 2
 
 ```elixir
-defmodule Solution2 do
-  @color_limits %{
-    "red" => 12,
-    "green" => 13,
-    "blue" => 14
-  }
+input_2 = Kino.Input.textarea("Part 2 Data")
+```
 
+```elixir
+defmodule Solution2 do
   def parse_counts(l) do
     l
     |> String.split(~r"[,;]")
@@ -122,7 +120,7 @@ defmodule Solution2 do
   def parse_game(l) do
     with [game_raw, counts_raw] <- String.split(l, ": "),
          {game_id, ""} <- String.replace_prefix(game_raw, "Game ", "") |> Integer.parse(),
-         counts <- Solution.parse_counts(counts_raw) do
+         counts <- Solution2.parse_counts(counts_raw) do
       %{
         :game_id => game_id,
         :counts => counts
@@ -130,22 +128,19 @@ defmodule Solution2 do
     end
   end
 
-  def is_possible(color_counts) do
-    Enum.map(@color_limits, fn {name, limit} -> color_counts[name] <= limit end)
-    |> Enum.all?()
-  end
-
   def solve(data) do
     data
     |> String.split("\n")
-    |> Stream.map(&Solution.parse_game/1)
-    |> Stream.filter(fn %{counts: counts, game_id: _} -> Solution.is_possible(counts) end)
-    |> Enum.into([])
-    |> Stream.map(fn game -> game.game_id end)
+    |> Stream.map(&Solution2.parse_game/1)
+    |> Stream.map(fn g ->
+      g.counts
+      |> Map.values()
+      |> Enum.product()
+    end)
     |> Enum.sum()
   end
 end
 
-data = Kino.Input.read(input)
-Solution.solve(data)
+data_2 = Kino.Input.read(input_2)
+Solution2.solve(data_2)
 ```
